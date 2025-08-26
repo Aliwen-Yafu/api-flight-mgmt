@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: flight_management
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - flight_network
+
+  api:
+    build: .
+    container_name: flight_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URL: mongodb://mongodb:27017
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app
+    networks:
+      - flight_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  flight_network:
+    driver: bridge
