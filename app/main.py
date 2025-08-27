@@ -104,3 +104,37 @@ def delete_flight(flight_id: str):
         return {"message": "Flight deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/flights/{flight_id}/stats")
+def get_flight_stats(flight_id: str):
+    """Obtener estadísticas de un vuelo"""
+    try:
+        collection = get_flights_collection()
+        flight = collection.find_one({"_id": ObjectId(flight_id)})
+
+        if flight is None:
+            raise HTTPException(status_code=404, detail="Flight not found")
+
+        passengers = flight["passengers"]
+        total_passengers = len(passengers)
+
+        # Estadísticas básica etaria
+        ages = [p["age"] for p in passengers]
+        avg_age = sum(ages) / len(ages) if ages else 0
+
+        # Distribución por categoría
+        category_stats = {}
+        for category in ["Black", "Platinum", "Gold", "Normal"]:
+            count = len([p for p in passengers if p["flightCategory"] == category])
+            category_stats[category] = count
+
+        return {
+            "flightCode": flight["flightCode"],
+            "totalPassengers": total_passengers,
+            "ageStats": {
+                "average": round(avg_age, 1),
+            },
+            "categoryDistribution": category_stats            
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
